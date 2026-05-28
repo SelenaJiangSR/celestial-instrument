@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ CELESTIAL INSTRUMENT</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --purple: #a855f7;
+  --deep:   #4c1d95;
+  --pink:   #ec4899;
+  --cyan:   #22d3ee;
+  --silver: #e2e8f0;
+  --gold:   #fbbf24;
+  --font:   'Orbitron', monospace;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--font);
+  color: var(--silver);
+  user-select: none;
+}
+
+/* ─── VIDEO BACKGROUND ─── */
+#video {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: 1;
+  z-index: 1;
+}
+
+/* ─── UI CANVAS ─── */
+#ui-canvas {
+  position: fixed; inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ─── CHORD FLASH ─── */
+#chord-flash {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 4; opacity: 0;
+}
+
+/* ─── TITLE ─── */
+#title {
+  position: fixed; top: 18px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 11px; letter-spacing: 0.45em;
+  color: rgba(168,85,247,0.6);
+  z-index: 10; white-space: nowrap;
+  text-shadow: 0 0 12px rgba(168,85,247,0.5);
+}
+
+/* ─── SIGNATURE ─── */
+#signature {
+  font-size: 8px; letter-spacing: 0.32em;
+  color: rgba(168,85,247,0.38);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ─── CHORD DISPLAY ─── */
+#chord-display {
+  position: fixed; top: 60px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center; z-index: 10;
+}
+#chord-name {
+  font-size: 28px; font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 20px var(--purple), 0 0 40px var(--purple);
+  letter-spacing: 0.1em;
+  transition: all 0.4s;
+}
+#chord-mood {
+  font-size: 9px; letter-spacing: 0.3em;
+  color: rgba(168,85,247,0.6); margin-top: 3px;
+}
+
+/* ─── BOTTOM CONTROL BAR ─── */
+#bottom-bar {
+  position: fixed; bottom: 22px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 12px; align-items: center;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(168,85,247,0.22);
+  border-radius: 50px;
+  padding: 10px 20px;
+  z-index: 10;
+}
+.bar-group { display: flex; gap: 4px; align-items: center; }
+.bar-label {
+  font-size: 7px; letter-spacing: 0.22em;
+  color: rgba(168,85,247,0.4); margin-right: 4px;
+}
+.pill {
+  font-size: 8.5px; letter-spacing: 0.12em;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(168,85,247,0.2);
+  background: transparent;
+  color: rgba(200,180,255,0.45);
+  cursor: pointer; transition: all 0.2s;
+  font-family: var(--font);
+}
+.pill:hover { border-color: rgba(168,85,247,0.5); color: rgba(200,180,255,0.8); }
+.pill.active {
+  background: rgba(168,85,247,0.22);
+  border-color: rgba(168,85,247,0.7);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(168,85,247,0.35);
+}
+.pause-btn {
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.15em;
+  min-width: 78px;
+}
+.pause-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+.pause-btn.paused {
+  background: rgba(244,63,94,0.18);
+  border-color: rgba(244,63,94,0.6);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(244,63,94,0.3);
+}
+.bar-sep { width: 1px; height: 20px; background: rgba(168,85,247,0.15); }
+
+/* ─── CAM STATUS ─── */
+#cam-status {
+  position: fixed; bottom: 80px; right: 22px;
+  font-size: 8px; letter-spacing: 0.18em;
+  color: rgba(168,85,247,0.4);
+  z-index: 10;
+}
+
+/* ─── WHEEL HINTS ─── */
+.wheel-hint {
+  position: fixed; top: 50%; z-index: 10;
+  font-size: 8px; letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.28);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#hint-left  { left: 22px; }
+#hint-right { right: 22px; text-align: right; }
+
+/* ─── LOADING ─── */
+#loading {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 200; transition: opacity 0.9s;
+}
+.load-orb {
+  font-size: 58px; margin-bottom: 18px;
+  filter: drop-shadow(0 0 22px rgba(168,85,247,0.9));
+  animation: lorb-spin 4s linear infinite;
+}
+@keyframes lorb-spin { to { transform: rotate(360deg); } }
+.load-title { font-size: 13px; letter-spacing: 0.5em; color: rgba(168,85,247,0.55); margin-bottom: 8px; }
+.load-step  { font-size: 9px; letter-spacing: 0.25em; color: rgba(168,85,247,0.3); height: 14px; }
+.load-prog  { width: 200px; height: 1px; background: rgba(168,85,247,0.12); border-radius: 1px; margin-top: 16px; overflow: hidden; }
+.load-fill  { height: 100%; background: linear-gradient(90deg, #4c1d95, #a855f7); border-radius: 1px; width: 0%; transition: width 0.5s; }
+
+/* ─── START PROMPT ─── */
+#start-prompt {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  z-index: 100; cursor: pointer;
+}
+#start-prompt .sp-orb {
+  font-size: 60px; margin-bottom: 20px;
+  filter: drop-shadow(0 0 25px rgba(168,85,247,0.8));
+  animation: pulse-orb 2s ease-in-out infinite;
+}
+@keyframes pulse-orb {
+  0%,100% { transform: scale(1);   filter: drop-shadow(0 0 20px rgba(168,85,247,0.7)); }
+  50%      { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(168,85,247,1)); }
+}
+#start-prompt .sp-text { font-size: 13px; letter-spacing: 0.4em; color: rgba(200,180,255,0.8); margin-bottom: 6px; }
+#start-prompt .sp-sub  { font-size: 8px; letter-spacing: 0.25em; color: rgba(168,85,247,0.45); }
+</style>
+</head>
+<body>
+
+<video id="video" autoplay muted playsinline></video>
+<canvas id="ui-canvas"></canvas>
+<div id="chord-flash"></div>
+
+<div id="title">
+  ✦ CELESTIAL INSTRUMENT · VW ✦
+  <div id="signature">Selena J.</div>
+</div>
+
+<div id="chord-display">
+  <div id="chord-name">C maj</div>
+  <div id="chord-mood">MAJOR · RADIANT</div>
+</div>
+
+<div class="wheel-hint" id="hint-left">ROOT<br>NOTE</div>
+<div class="wheel-hint" id="hint-right">CHORD<br>MOOD</div>
+
+<div id="bottom-bar">
+  <div class="bar-group">
+    <span class="bar-label">MODE</span>
+    <button class="pill active" data-group="mode" data-val="chord">chord</button>
+    <button class="pill" data-group="mode" data-val="melody">melody</button>
+    <button class="pill" data-group="mode" data-val="drone">drone</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">SCALE</span>
+    <button class="pill active" data-group="scale" data-val="major">major</button>
+    <button class="pill" data-group="scale" data-val="minor">minor</button>
+    <button class="pill" data-group="scale" data-val="penta">penta</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">WAVE</span>
+    <button class="pill active" data-group="wave" data-val="sine">sine</button>
+    <button class="pill" data-group="wave" data-val="triangle">tri</button>
+    <button class="pill" data-group="wave" data-val="sawtooth">saw</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">RANGE</span>
+    <button class="pill" data-group="range" data-val="bass">bass</button>
+    <button class="pill active" data-group="range" data-val="mid">mid</button>
+    <button class="pill" data-group="range" data-val="high">high</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">TIMBRE</span>
+    <button class="pill active" data-group="timbre" data-val="piano">piano</button>
+    <button class="pill" data-group="timbre" data-val="soul">soul</button>
+  </div>
+  <div class="bar-sep"></div>
+  <button class="pill pause-btn" id="pause-btn">⏸ pause</button>
+</div>
+
+<div id="cam-status">GESTURE CAM LOADING…</div>
+
+<div id="loading">
+  <div class="load-orb">⊕</div>
+  <div class="load-title">CELESTIAL INSTRUMENT</div>
+  <div class="load-step" id="load-step">Initialising…</div>
+  <div class="load-prog"><div class="load-fill" id="load-fill"></div></div>
+</div>
+
+<div id="start-prompt" style="display:none">
+  <div class="sp-orb">⊕</div>
+  <div class="sp-text">TOUCH TO AWAKEN</div>
+  <div class="sp-sub">click anywhere to start the music</div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+const NOTES       = ['C','D','E','F','G','A','B'];
+const CHORD_TYPES = ['maj','m','m7','sus4','dim','aug','7'];
+const NOTE_MIDI   = { C:60, D:62, E:64, F:65, G:67, A:69, B:71 };
+const CHORD_IVLS  = {
+  maj:[0,4,7], m:[0,3,7], m7:[0,3,7,10],
+  sus4:[0,5,7], dim:[0,3,6], aug:[0,4,8],
+  '7':[0,4,7,10]
+};
+const CHORD_MOOD = {
+  maj:'RADIANT · UPLIFTING', m:'DEEP · MYSTERIOUS',
+  m7:'DREAMY · FLOATING',    sus4:'SUSPENDED · OPEN',
+  dim:'DARK · DRAMATIC',     aug:'ETHEREAL · STRANGE',
+  '7':'TENSION · BLUES'
+};
+const CHORD_COLORS = {
+  maj:'#fbbf24', m:'#818cf8', m7:'#c084fc',
+  sus4:'#22d3ee', dim:'#f43f5e', aug:'#86efac',
+  '7':'#fb923c'
+};
+const OCTAVE_SHIFT = { bass:-12, mid:0, high:12 };
+
+// ─── Instrument presets ───
+const INSTRUMENTS = {
+  piano: {
+    label: 'piano',
+    osc:      { type: 'triangle' },
+    env:      { attack: 0.005, decay: 0.9, sustain: 0.0, release: 1.6 },
+    volume:   -4,  duration: 2.2,
+    vibratoDepth: 0.00, vibratoFreq: 5,
+    shimmerVol: -60, shimmerDur: 0.5,
+    reverbWet: 0.18, delayWet: 0.0,
+  },
+  soul: {
+    label: 'soul',
+    // Fat sine synth — handled by dedicated toxicSynth, not padSynth
+    reverbWet: 0.36, delayWet: 0.0,
+    shimmerVol: -60, shimmerDur: 0.5, duration: 2.8,
+    osc: { type: 'sine' }, env: { attack:0.04, decay:0.2, sustain:0.82, release:1.6 },
+    volume: -5, vibratoDepth: 0, vibratoFreq: 5,
+  },
+};
+let currentInstrument = 'piano';
+let vibratoNode = null;
+let reverbNode  = null;
+let delayNode   = null;
+
+const S = {
+  rootIdx: 0, chordIdx: 0,
+  mode: 'chord', scale: 'major', wave: 'sine', range: 'mid',
+  leftHand: null, rightHand: null,
+  audioReady: false, gestureReady: false,
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  LOADING UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function loadScript(primary, fallback, ms=9000) {
+  return new Promise((res, rej) => {
+    let done = false;
+    function tryLoad(src, isFb) {
+      const s = document.createElement('script'); s.src = src;
+      s.onload = () => { if (!done) { done=true; res(); } };
+      s.onerror = () => {
+        if (!done && !isFb && fallback) tryLoad(fallback, true);
+        else if (!done) { done=true; rej(new Error(src)); }
+      };
+      document.head.appendChild(s);
+    }
+    tryLoad(primary, false);
+    if (fallback) setTimeout(() => { if (!done) tryLoad(fallback, true); }, ms);
+  });
+}
+
+const loadFill = document.getElementById('load-fill');
+const loadStep = document.getElementById('load-step');
+function setStep(msg, pct) { loadStep.textContent=msg; loadFill.style.width=pct+'%'; }
+
+// ═══════════════════════════════════════════════════════════════
+//  AUDIO  — tuned for Birds of a Feather
+// ═══════════════════════════════════════════════════════════════
+let padSynth, shimmerSynth, droneSynth;
+let pianoSampler, guitarSynth, toxicSynth;
+let lastRoot=-1, lastChord=-1, chordTimer=null;
+let isPaused = false;
+
+async function initAudio() {
+  await Tone.start();
+
+  // Signal chain end: Limiter → destination
+  const limiter = new Tone.Limiter(-3).toDestination();
+
+  // Compressor — keeps layered notes clean
+  const compressor = new Tone.Compressor({
+    threshold:-20, ratio:5, attack:0.004, release:0.22, knee:6
+  });
+  compressor.connect(limiter);
+
+  // Long dreamy reverb — key to the ethereal atmosphere
+  const reverb = new Tone.Reverb({ decay:10, wet:0.65 });
+  reverb.connect(compressor);
+  await reverb.generate();
+  reverbNode = reverb;
+
+  // Soft delay shimmer
+  const delay = new Tone.FeedbackDelay({ delayTime:0.38, feedback:0.22, wet:0.18 });
+  delay.connect(reverb);
+  delayNode = delay;
+
+  // Chorus for gentle stereo width
+  const chorus = new Tone.Chorus(2.2, 4.0, 0.40).start();
+  chorus.connect(delay);
+
+  // Vibrato — makes the pad breathe organically
+  const vibrato = new Tone.Vibrato({ frequency:3.5, depth:0.18, wet:0.5 });
+  vibrato.connect(chorus);
+  vibratoNode = vibrato; // expose for live instrument switching
+
+  // Main pad — soft triangle wave, warm and airy
+  padSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope:   { attack:0.9, decay:0.6, sustain:0.60, release:3.5 },
+    volume: -5,
+  });
+  padSynth.connect(vibrato);
+
+  // Shimmer layer — high octave sine for sparkle on top
+  shimmerSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sine' },
+    envelope:   { attack:1.2, decay:0.5, sustain:0.3, release:4 },
+    volume: -18,
+  });
+  shimmerSynth.connect(reverb);
+
+  // Deep drone for foundation
+  droneSynth = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope:   { attack:3, decay:0, sustain:1, release:4 },
+    volume: -26,
+  });
+  droneSynth.connect(reverb);
+
+  // ── Soul (RnB): fat detuned sines + chorus + warm filter ──
+  const soulChorus = new Tone.Chorus({ frequency: 2.2, delayTime: 3.8, depth: 0.45, wet: 0.55 }).start();
+  const soulReverb = new Tone.Reverb({ decay: 2.8, wet: 0.36 });
+  const soulFilter = new Tone.Filter({ type: 'lowpass', frequency: 2400, Q: 0.7 });
+  soulReverb.connect(compressor);
+  await soulReverb.generate();
+
+  toxicSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'fatsine', count: 3, spread: 22 },
+    envelope: { attack: 0.04, decay: 0.22, sustain: 0.82, release: 0.35 },
+    volume: -5,
+  });
+  toxicSynth.connect(soulFilter);
+  soulFilter.connect(soulChorus);
+  soulChorus.connect(soulReverb);
+
+  // ── Real piano sampler (Salamander Grand Piano recordings) ──
+  const dryReverb = new Tone.Reverb({ decay:1.8, wet:0.18 });
+  dryReverb.connect(compressor);
+  await dryReverb.generate();
+
+  pianoSampler = new Tone.Sampler({
+    urls: {
+      A1:'A1.mp3', C2:'C2.mp3', A2:'A2.mp3', C3:'C3.mp3',
+      A3:'A3.mp3', C4:'C4.mp3', A4:'A4.mp3', C5:'C5.mp3',
+      A5:'A5.mp3', C6:'C6.mp3', A6:'A6.mp3', C7:'C7.mp3',
+    },
+    baseUrl: 'https://tonejs.github.io/audio/salamander/',
+    onload: () => {
+      const cs = document.getElementById('cam-status');
+      if (cs) cs.textContent = (cs.textContent === 'PIANO SAMPLES LOADING…')
+        ? 'GESTURE CAM ACTIVE ✦' : cs.textContent;
+    },
+    volume: -4,
+  });
+  pianoSampler.connect(dryReverb);
+
+  // ── Guitar (Karplus-Strong pluck synthesis) ──
+  guitarSynth = new Tone.PolySynth(Tone.PluckSynth, {
+    attackNoise: 1.5,
+    dampening:   3800,
+    resonance:   0.97,
+  });
+  guitarSynth.connect(dryReverb);
+
+  S.audioReady = true;
+  // Don't auto-play — wait for a hand to enter a wheel section
+}
+
+function getChordNotes(rootIdx, chordIdx) {
+  const base = NOTE_MIDI[NOTES[rootIdx]] + OCTAVE_SHIFT[S.range];
+  return CHORD_IVLS[CHORD_TYPES[chordIdx]].map(i => Tone.Frequency(base+i,'midi').toNote());
+}
+
+function scheduleChord(force=false) {
+  if (!S.audioReady || isPaused) return;
+  if (!force && S.rootIdx===lastRoot && S.chordIdx===lastChord) return;
+  if (chordTimer) clearTimeout(chordTimer);
+  chordTimer = setTimeout(() => {
+    const notes = getChordNotes(S.rootIdx, S.chordIdx);
+    const root  = NOTES[S.rootIdx];
+
+    const preset = INSTRUMENTS[currentInstrument] || INSTRUMENTS.pad;
+    const isPiano  = currentInstrument === 'piano';
+    const isGuitar = currentInstrument === 'guitar';
+    const isToxic  = currentInstrument === 'soul';
+
+    if (!isPiano && !isGuitar && !isToxic) padSynth.releaseAll('+0.15');
+    if (isToxic && toxicSynth) toxicSynth.releaseAll('+0.0');
+
+    setTimeout(() => {
+      if (isPiano && pianoSampler) {
+        pianoSampler.triggerAttackRelease(notes, preset.duration);
+      } else if (isGuitar && guitarSynth) {
+        guitarSynth.triggerAttack(notes);
+      } else if (isToxic && toxicSynth) {
+        toxicSynth.triggerAttackRelease(notes, preset.duration);
+      } else {
+        padSynth.triggerAttackRelease(notes, preset.duration);
+        if (shimmerSynth) {
+          const highNotes = notes.map(n => Tone.Frequency(n).transpose(12).toNote());
+          shimmerSynth.triggerAttackRelease(highNotes, preset.shimmerDur);
+        }
+      }
+
+      // Drone bass (only for pad-style instruments)
+      if (!isPiano && !isGuitar && S.mode !== 'melody') {
+        const droneNote = Tone.Frequency(NOTE_MIDI[root]+OCTAVE_SHIFT[S.range]-12,'midi').toNote();
+        droneSynth.triggerRelease();
+        setTimeout(() => droneSynth.triggerAttackRelease(droneNote, 3.5), 400);
+      }
+    }, isPiano || isGuitar ? 0 : 160);
+
+    // Update wave type (pad synths only)
+    if (!isPiano && !isGuitar) {
+      const waveMap = { sine:'triangle', triangle:'triangle', sawtooth:'sawtooth' };
+      padSynth.set({ oscillator:{ type: waveMap[S.wave] || 'triangle' } });
+    }
+
+    lastRoot  = S.rootIdx;
+    lastChord = S.chordIdx;
+    updateChordUI();
+  }, 120);
+}
+
+function updateChordUI() {
+  const name = NOTES[S.rootIdx] + ' ' + CHORD_TYPES[S.chordIdx];
+  const mood = CHORD_MOOD[CHORD_TYPES[S.chordIdx]];
+  document.getElementById('chord-name').textContent = name;
+  document.getElementById('chord-mood').textContent = mood;
+  document.getElementById('chord-name').style.textShadow =
+    `0 0 20px ${CHORD_COLORS[CHORD_TYPES[S.chordIdx]]}, 0 0 40px ${CHORD_COLORS[CHORD_TYPES[S.chordIdx]]}`;
+}
+
+function stopAll() {
+  if (!S.audioReady) return;
+  if (chordTimer) { clearTimeout(chordTimer); chordTimer=null; }
+  if (padSynth)     padSynth.releaseAll('+0.3');
+  if (shimmerSynth) shimmerSynth.releaseAll('+0.3');
+  if (droneSynth)   droneSynth.triggerRelease();
+  if (pianoSampler) pianoSampler.releaseAll('+0.2');
+  if (guitarSynth)  guitarSynth.releaseAll('+0.1');
+  if (toxicSynth)   toxicSynth.releaseAll('+0.1');
+  lastRoot=-1; lastChord=-1;
+}
+
+function togglePause() {
+  const btn = document.getElementById('pause-btn');
+  isPaused = !isPaused;
+  if (isPaused) {
+    stopAll();
+    btn.textContent = '▶ resume';
+    btn.classList.add('paused');
+  } else {
+    btn.textContent = '⏸ pause';
+    btn.classList.remove('paused');
+    // Music resumes only when hand enters a wheel — no auto-play
+  }
+}
+
+function applyInstrument(name) {
+  if (!INSTRUMENTS[name] || !S.audioReady) return;
+  currentInstrument = name;
+  const p = INSTRUMENTS[name];
+  stopAll();
+  padSynth.set({ oscillator: p.osc, envelope: p.env, volume: p.volume });
+  if (shimmerSynth) shimmerSynth.set({ volume: p.shimmerVol });
+  if (vibratoNode)  vibratoNode.set({ depth: p.vibratoDepth, frequency: p.vibratoFreq });
+  if (reverbNode)   reverbNode.wet.value  = p.reverbWet;
+  if (delayNode)    delayNode.wet.value   = p.delayWet;
+  lastRoot=-1; lastChord=-1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WHEEL DRAWING  — white glassmorphism
+// ═══════════════════════════════════════════════════════════════
+const uiCanvas = document.getElementById('ui-canvas');
+const uctx     = uiCanvas.getContext('2d');
+let LW_CENTER, RW_CENTER;
+const OUTER_R=175, INNER_R=58, GAP=8;
+
+function updateWheelCenters() {
+  uiCanvas.width  = innerWidth;
+  uiCanvas.height = innerHeight;
+  const cy = innerHeight * 0.5;
+  LW_CENTER = { x: Math.min(220, innerWidth*0.22), y: cy };
+  RW_CENTER = { x: Math.max(innerWidth-220, innerWidth*0.78), y: cy };
+}
+updateWheelCenters();
+window.addEventListener('resize', updateWheelCenters);
+
+function drawWheel(cx, cy, labels, activeIdx, handPos, handInCenter=false, centerLabel='⏹ STOP', centerIsAction=false) {
+  const n = labels.length;
+  const step  = (Math.PI*2) / n;
+  const start = -Math.PI / 2;
+
+  // Dark backdrop for contrast against camera
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, OUTER_R+14, 0, Math.PI*2);
+  uctx.fillStyle = 'rgba(0,0,0,0.38)';
+  uctx.fill();
+  uctx.restore();
+
+  // Outer halo ring
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, OUTER_R+10, 0, Math.PI*2);
+  uctx.strokeStyle = 'rgba(255,255,255,0.30)';
+  uctx.lineWidth   = 1.5;
+  uctx.shadowColor = 'rgba(255,255,255,0.8)';
+  uctx.shadowBlur  = 22;
+  uctx.stroke();
+  uctx.restore();
+
+  // Sections
+  for (let i=0; i<n; i++) {
+    const a0 = start + i*step + 0.02;
+    const a1 = start + (i+1)*step - 0.02;
+    const isAct = i === activeIdx;
+
+    uctx.save();
+    uctx.beginPath();
+    uctx.arc(cx, cy, OUTER_R, a0, a1);
+    uctx.arc(cx, cy, INNER_R, a1, a0, true);
+    uctx.closePath();
+
+    if (isAct) {
+      const grad = uctx.createRadialGradient(cx,cy,INNER_R, cx,cy,OUTER_R);
+      grad.addColorStop(0, 'rgba(255,255,255,0.38)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.55)');
+      uctx.fillStyle   = grad;
+      uctx.shadowColor = 'rgba(255,255,255,1)';
+      uctx.shadowBlur  = 38;
+    } else {
+      uctx.fillStyle = 'rgba(255,255,255,0.13)';
+    }
+    uctx.fill();
+
+    uctx.strokeStyle = isAct ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.30)';
+    uctx.lineWidth   = isAct ? 2.0 : 0.9;
+    if (isAct) { uctx.shadowColor='rgba(255,255,255,0.9)'; uctx.shadowBlur=20; }
+    else uctx.shadowBlur = 0;
+    uctx.stroke();
+    uctx.restore();
+
+    // Label
+    const lr = (OUTER_R+INNER_R)/2;
+    const la = start + (i+0.5)*step;
+    const lx = cx + Math.cos(la)*lr;
+    const ly = cy + Math.sin(la)*lr;
+    uctx.save();
+    uctx.font         = isAct ? 'bold 13px Orbitron, monospace' : '11px Orbitron, monospace';
+    uctx.fillStyle    = isAct ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.65)';
+    uctx.textAlign    = 'center';
+    uctx.textBaseline = 'middle';
+    if (isAct) { uctx.shadowColor='rgba(255,255,255,1)'; uctx.shadowBlur=14; }
+    uctx.fillText(labels[i], lx, ly);
+    uctx.restore();
+  }
+
+  // Inner circle — STOP button
+  const stopR = INNER_R - GAP;
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, stopR, 0, Math.PI*2);
+  const _isMaj = centerLabel === 'maj';
+  const _activeCol = _isMaj ? 'rgba(255,255,255,' : 'rgba(244,63,94,';
+  uctx.fillStyle   = handInCenter ? _activeCol+'0.35)' : 'rgba(255,255,255,0.10)';
+  uctx.fill();
+  uctx.strokeStyle = handInCenter ? _activeCol+'0.95)' : 'rgba(255,255,255,0.45)';
+  uctx.lineWidth   = handInCenter ? 2 : 1;
+  uctx.shadowColor = handInCenter ? _activeCol+'1)' : 'rgba(255,255,255,0.7)';
+  uctx.shadowBlur  = handInCenter ? 28 : 12;
+  uctx.stroke();
+  uctx.restore();
+  // STOP label inside center
+  uctx.save();
+  uctx.font         = handInCenter ? 'bold 11px Orbitron, monospace' : '9px Orbitron, monospace';
+  const isMAJ = centerLabel === 'maj';
+  uctx.fillStyle    = handInCenter
+    ? (isMAJ ? 'rgba(255,255,255,1)' : 'rgba(244,63,94,1)')
+    : 'rgba(255,255,255,0.35)';
+  uctx.textAlign    = 'center';
+  uctx.textBaseline = 'middle';
+  if (handInCenter) {
+    uctx.shadowColor = isMAJ ? 'rgba(255,255,255,1)' : 'rgba(244,63,94,1)';
+    uctx.shadowBlur  = 16;
+  }
+  uctx.fillText(isMAJ ? 'maj' : '⏹ STOP', cx, cy);
+  uctx.restore();
+
+  // Active section inner arc highlight
+  if (activeIdx >= 0) {
+    const a0=start+activeIdx*step+0.04, a1=start+(activeIdx+1)*step-0.04;
+    uctx.save();
+    uctx.beginPath();
+    uctx.arc(cx, cy, INNER_R-GAP+2, a0, a1);
+    uctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    uctx.lineWidth   = 2.5;
+    uctx.shadowColor = 'rgba(255,255,255,0.9)';
+    uctx.shadowBlur  = 22;
+    uctx.stroke();
+    uctx.restore();
+  }
+
+  // Hand tracking dot
+  if (handPos) {
+    const dx=handPos.x-cx, dy=handPos.y-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if (dist>INNER_R && dist<OUTER_R+30) {
+      uctx.save();
+      uctx.beginPath();
+      uctx.arc(handPos.x, handPos.y, 7, 0, Math.PI*2);
+      uctx.fillStyle   = '#fff';
+      uctx.shadowColor = 'rgba(255,255,255,1)';
+      uctx.shadowBlur  = 20;
+      uctx.fill();
+      uctx.beginPath();
+      uctx.moveTo(cx, cy);
+      uctx.lineTo(handPos.x, handPos.y);
+      uctx.strokeStyle = 'rgba(255,255,255,0.30)';
+      uctx.lineWidth   = 1;
+      uctx.shadowBlur  = 0;
+      uctx.stroke();
+      uctx.restore();
+    }
+  }
+}
+
+function getSection(hx, hy, cx, cy, n) {
+  const dx=hx-cx, dy=hy-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if (dist<INNER_R+10 || dist>OUTER_R+40) return -1;
+  const ang  = Math.atan2(dy, dx);
+  const norm = (ang+Math.PI/2+Math.PI*2) % (Math.PI*2);
+  return Math.floor(norm / ((Math.PI*2)/n)) % n;
+}
+
+function isInCenter(hx, hy, cx, cy) {
+  const dx=hx-cx, dy=hy-cy;
+  return Math.sqrt(dx*dx+dy*dy) < (INNER_R - GAP + 6);
+}
+
+let _wasHandActive = false;
+
+function drawWheels() {
+  uctx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
+
+  const lx = S.leftHand  ? S.leftHand.x  : -999;
+  const ly = S.leftHand  ? S.leftHand.y  : -999;
+  const rx = S.rightHand ? S.rightHand.x : -999;
+  const ry = S.rightHand ? S.rightHand.y : -999;
+
+  const lSect = getSection(lx, ly, LW_CENTER.x, LW_CENTER.y, NOTES.length);
+  const rSect = getSection(rx, ry, RW_CENTER.x, RW_CENTER.y, CHORD_TYPES.length);
+
+  // Center detection
+  const lInCenter = S.leftHand  && isInCenter(lx, ly, LW_CENTER.x, LW_CENTER.y);
+  const rInCenter = S.rightHand && isInCenter(rx, ry, RW_CENTER.x, RW_CENTER.y);
+
+  // Both centers = STOP
+  if (lInCenter) stopAll();
+  if (rInCenter) stopAll();
+
+  // At least one hand on a ring section (not center, not outside)?
+  const isHandActive = lSect >= 0 || rSect >= 0;
+  const justEntered  = isHandActive && !_wasHandActive;
+  const justLeft     = !isHandActive && _wasHandActive;
+  _wasHandActive = isHandActive;
+
+  if (justLeft && !lInCenter && !rInCenter) stopAll();
+
+  if (isHandActive) {
+    if (lSect>=0 && lSect!==S.rootIdx)  { S.rootIdx=lSect;  scheduleChord(); }
+    if (rSect>=0 && rSect!==S.chordIdx) { S.chordIdx=rSect; scheduleChord(); }
+    if (justEntered) scheduleChord(true);
+  }
+
+  drawWheel(LW_CENTER.x, LW_CENTER.y, NOTES, S.rootIdx, S.leftHand, lInCenter, '⏹ STOP');
+  drawWheel(RW_CENTER.x, RW_CENTER.y, CHORD_TYPES, S.chordIdx, S.rightHand, rInCenter, '⏹ STOP');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MEDIAPIPE HANDS
+// ═══════════════════════════════════════════════════════════════
+async function loadGestureCamera() {
+  const cs = document.getElementById('cam-status');
+  cs.textContent = 'LOADING GESTURE ENGINE…';
+  try {
+    await loadScript(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
+      'https://unpkg.com/@mediapipe/hands/hands.js', 12000
+    );
+    await loadScript(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js',
+      'https://unpkg.com/@mediapipe/camera_utils/camera_utils.js', 8000
+    );
+  } catch(e) {
+    cs.textContent = 'GESTURE CAM UNAVAILABLE'; return;
+  }
+
+  cs.textContent = 'STARTING CAMERA…';
+  const video = document.getElementById('video');
+
+  const mp = new Hands({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+  mp.setOptions({ maxNumHands:2, modelComplexity:1, minDetectionConfidence:0.70, minTrackingConfidence:0.55 });
+
+  mp.onResults(results => {
+    S.leftHand = null; S.rightHand = null;
+    if (!results.multiHandLandmarks) return;
+    results.multiHandLandmarks.forEach(lm => {
+      const px = (1 - ((lm[0].x+lm[5].x+lm[17].x)/3)) * innerWidth;
+      const py = ((lm[0].y+lm[5].y+lm[17].y)/3) * innerHeight;
+      if (px < innerWidth*0.5) S.leftHand  = { x:px, y:py };
+      else                     S.rightHand = { x:px, y:py };
+    });
+  });
+
+  try {
+    await new Camera(video, {
+      onFrame: async () => { await mp.send({ image:video }); },
+      width:640, height:480,
+    }).start();
+    cs.textContent = 'GESTURE CAM ACTIVE ✦';
+    S.gestureReady = true;
+    setTimeout(() => { cs.style.opacity='0.3'; }, 3000);
+  } catch(e) {
+    cs.textContent = 'CAMERA ACCESS DENIED';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════════════
+function startLoop() {
+  (function loop() {
+    requestAnimationFrame(loop);
+    drawWheels();
+  })();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UI EVENTS
+// ═══════════════════════════════════════════════════════════════
+function initUI() {
+  document.querySelectorAll('.pill:not(#pause-btn)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group;
+      const val   = btn.dataset.val;
+      document.querySelectorAll(`.pill[data-group="${group}"]`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      if (group === 'timbre') {
+        if (val === 'piano' && pianoSampler && !pianoSampler.loaded) {
+          document.getElementById('cam-status').textContent = 'PIANO SAMPLES LOADING…';
+        }
+        applyInstrument(val);
+        return;
+      }
+      S[group] = val;
+      if (group==='wave' && padSynth) {
+        const waveMap = { sine:'triangle', triangle:'triangle', sawtooth:'sawtooth' };
+        padSynth.set({ oscillator:{ type: waveMap[val] || 'triangle' } });
+      }
+      if (group==='range') scheduleChord(true);
+    });
+  });
+  document.getElementById('pause-btn').addEventListener('click', togglePause);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════
+async function main() {
+  setStep('Preparing instrument…', 40);
+  await new Promise(r => setTimeout(r, 200));
+  startLoop();
+  initUI();
+  setStep('Ready ✦', 100);
+  await new Promise(r => setTimeout(r, 300));
+
+  const lov = document.getElementById('loading');
+  lov.style.opacity = '0';
+  setTimeout(() => { lov.remove(); }, 900);
+
+  const sp = document.getElementById('start-prompt');
+  sp.style.display = 'flex';
+
+  loadGestureCamera();
+
+  sp.addEventListener('click', async () => {
+    sp.style.opacity = '0';
+    setTimeout(() => { sp.remove(); }, 600);
+    document.getElementById('cam-status').textContent = 'LOADING AUDIO ENGINE…';
+
+    await loadScript(
+      'https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js',
+      'https://unpkg.com/tone@14.7.77/build/Tone.js', 12000
+    ).catch(() => {});
+
+    if (typeof Tone !== 'undefined') {
+      await initAudio();
+      document.getElementById('cam-status').textContent =
+        S.gestureReady ? 'GESTURE CAM ACTIVE ✦' : 'GESTURE CAM LOADING…';
+    }
+  }, { once: true });
+}
+
+main().catch(err => {
+  document.getElementById('load-step').textContent = 'Error: '+err.message;
+  document.getElementById('load-step').style.color = '#f43f5e';
+});
+</script>
+</body>
+</html>
