@@ -4,6 +4,8 @@ A browser-based musical instrument controlled entirely by hand gestures — no k
 
 **[▶ Try it live](https://SelenaJiangSR.github.io/celestial-instrument/)**
 
+<video src="demo.mp4" controls width="100%"></video>
+
 ---
 
 ## What it does
