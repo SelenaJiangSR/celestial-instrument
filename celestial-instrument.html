@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>✦ SOMA INSTRUMENT</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --purple: #a855f7;
+  --deep:   #4c1d95;
+  --pink:   #ec4899;
+  --cyan:   #22d3ee;
+  --silver: #e2e8f0;
+  --gold:   #fbbf24;
+  --font:   'Orbitron', monospace;
+}
+
+body {
+  background: #000;
+  overflow: hidden;
+  font-family: var(--font);
+  color: var(--silver);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── VIDEO BACKGROUND ─── */
+#video {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: 1;
+  z-index: 1;
+}
+
+/* ─── UI CANVAS ─── */
+#ui-canvas {
+  position: fixed; inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ─── CHORD FLASH ─── */
+#chord-flash {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 4; opacity: 0;
+}
+
+/* ─── TITLE ─── */
+#title {
+  position: fixed; top: 18px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 11px; letter-spacing: 0.45em;
+  color: rgba(255,255,255,0.32);
+  z-index: 10; white-space: nowrap;
+}
+
+/* ─── SIGNATURE ─── */
+#signature {
+  font-size: 8px; letter-spacing: 0.32em;
+  color: rgba(255,255,255,0.18);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ─── CHORD DISPLAY ─── */
+#chord-display {
+  position: fixed; top: 60px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center; z-index: 10;
+}
+#chord-name {
+  font-size: 28px; font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255,255,255,0.25);
+  letter-spacing: 0.1em;
+  transition: all 0.4s;
+}
+#chord-mood {
+  font-size: 9px; letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.28); margin-top: 3px;
+}
+
+/* ─── BOTTOM CONTROL BAR ─── */
+#bottom-bar {
+  position: fixed; bottom: 22px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 12px; align-items: center;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 50px;
+  padding: 10px 20px;
+  z-index: 10;
+  max-width: calc(100vw - 24px);
+}
+.bar-group { display: flex; gap: 4px; align-items: center; }
+.bar-label {
+  font-size: 7px; letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.25); margin-right: 4px;
+  white-space: nowrap;
+}
+.pill {
+  font-size: 8.5px; letter-spacing: 0.12em;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: rgba(255,255,255,0.38);
+  cursor: pointer; transition: all 0.2s;
+  font-family: var(--font);
+  min-height: 36px; display: flex; align-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.pill:hover { border-color: rgba(255,255,255,0.38); color: rgba(255,255,255,0.75); }
+.pill.active {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.55);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255,255,255,0.10);
+}
+.pause-btn {
+  border-color: rgba(255,255,255,0.20);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.15em;
+  min-width: 78px;
+}
+.pause-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+.pause-btn.paused {
+  background: rgba(244,63,94,0.15);
+  border-color: rgba(244,63,94,0.55);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(244,63,94,0.22);
+}
+.bar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  #bottom-bar {
+    flex-wrap: wrap;
+    border-radius: 16px;
+    padding: 10px 14px;
+    gap: 8px;
+    bottom: 12px;
+    justify-content: center;
+  }
+  .bar-sep { display: none; }
+  .bar-label { font-size: 6px; }
+  .pill { font-size: 7.5px; padding: 3px 8px; min-height: 32px; }
+}
+
+/* ─── CAM STATUS ─── */
+#cam-status {
+  position: fixed; bottom: 80px; right: 22px;
+  font-size: 8px; letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.22);
+  z-index: 10;
+}
+@media (max-width: 640px) {
+  #cam-status { bottom: 140px; right: 12px; font-size: 7px; }
+}
+
+/* ─── WHEEL HINTS ─── */
+.wheel-hint {
+  position: fixed; top: 50%; z-index: 10;
+  font-size: 8px; letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.28);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#hint-left  { left: 22px; }
+#hint-right { right: 22px; text-align: right; }
+@media (max-width: 640px) { .wheel-hint { display: none; } }
+
+/* ─── LOADING ─── */
+#loading {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 200; transition: opacity 0.9s;
+}
+.load-orb {
+  font-size: 58px; margin-bottom: 18px;
+  filter: drop-shadow(0 0 18px rgba(255,255,255,0.45));
+  animation: lorb-spin 4s linear infinite;
+}
+@keyframes lorb-spin { to { transform: rotate(360deg); } }
+.load-title { font-size: 13px; letter-spacing: 0.5em; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+.load-step  { font-size: 9px; letter-spacing: 0.25em; color: rgba(255,255,255,0.22); height: 14px; }
+.load-prog  { width: 200px; height: 1px; background: rgba(255,255,255,0.08); border-radius: 1px; margin-top: 16px; overflow: hidden; }
+.load-fill  { height: 100%; background: rgba(255,255,255,0.55); border-radius: 1px; width: 0%; transition: width 0.5s; }
+
+/* ─── START PROMPT ─── */
+#start-prompt {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  z-index: 100; cursor: pointer;
+}
+#start-prompt .sp-orb {
+  font-size: 60px; margin-bottom: 20px;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.4));
+  animation: pulse-orb 2s ease-in-out infinite;
+}
+@keyframes pulse-orb {
+  0%,100% { transform: scale(1);   filter: drop-shadow(0 0 16px rgba(255,255,255,0.35)); }
+  50%      { transform: scale(1.06); filter: drop-shadow(0 0 28px rgba(255,255,255,0.6)); }
+}
+#start-prompt .sp-text { font-size: 13px; letter-spacing: 0.4em; color: rgba(255,255,255,0.75); margin-bottom: 6px; }
+#start-prompt .sp-sub  { font-size: 8px; letter-spacing: 0.25em; color: rgba(255,255,255,0.28); }
+
+/* ─── LANDING PAGE ─── */
+#landing {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 300;
+  cursor: none;
+}
+
+.land-header {
+  position: absolute;
+  top: 32px; left: 48px; right: 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  opacity: 0;
+}
+.land-header-label {
+  font-size: 8px; letter-spacing: 0.5em;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+}
+
+.land-center {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 80px clamp(24px, 8vw, 120px);
+}
+
+.land-title {
+  font-size: clamp(38px, 9vw, 96px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  line-height: 0.92;
+  margin-bottom: 30px;
+  opacity: 0;
+}
+
+.land-sub {
+  font-size: clamp(8px, 1.5vw, 11px);
+  letter-spacing: 0.42em;
+  color: rgba(255,255,255,0.32);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.land-desc {
+  font-size: clamp(8px, 1.2vw, 10px);
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.18);
+  margin-bottom: 52px;
+  line-height: 2.3;
+  max-width: 400px;
+  opacity: 0;
+}
+
+.land-cta {
+  font-family: var(--font);
+  font-size: 9px; letter-spacing: 0.5em;
+  color: rgba(255,255,255,0.85);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 2px;
+  padding: 15px 40px;
+  cursor: none;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  min-height: 50px;
+  display: inline-flex; align-items: center;
+  align-self: flex-start;
+  opacity: 0;
+  text-transform: uppercase;
+}
+.land-cta:hover {
+  border-color: rgba(255,255,255,0.72);
+  color: #fff;
+  background: rgba(255,255,255,0.04);
+}
+
+.land-footer {
+  position: absolute;
+  bottom: 28px; left: 48px; right: 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 7px; letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.12);
+  opacity: 0;
+}
+
+#cursor-follower {
+  position: fixed;
+  z-index: 400;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: #fff;
+  top: -110px; left: -110px;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .land-header { left: 24px; right: 24px; top: 22px; }
+  .land-center { padding: 80px 24px; }
+  .land-footer { left: 24px; right: 24px; bottom: 18px; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  #cursor-follower { display: none; }
+  #landing { cursor: auto; }
+  .land-cta { cursor: pointer; }
+}
+
+/* ─── TUTORIAL PAGES ─── */
+#tutorial-1, #tutorial-2 {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 295;
+  display: none;
+  opacity: 0;
+}
+
+.tut-header {
+  position: absolute;
+  top: 32px; left: 48px; right: 48px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.tut-header-label {
+  font-size: 8px; letter-spacing: 0.5em;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+}
+
+.tut-footer-bar {
+  position: absolute;
+  bottom: 28px; left: 48px; right: 48px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.tut-dots { display: flex; gap: 8px; align-items: center; }
+.tut-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); transition: background 0.3s;
+}
+.tut-dot.active { background: rgba(255,255,255,0.72); }
+
+.tut-skip {
+  font-family: var(--font);
+  font-size: 8px; letter-spacing: 0.35em;
+  color: rgba(255,255,255,0.22);
+  background: none; border: none; cursor: pointer;
+  padding: 4px; text-transform: uppercase; transition: color 0.2s;
+}
+.tut-skip:hover { color: rgba(255,255,255,0.55); }
+
+.tut-btn {
+  font-family: var(--font);
+  font-size: 9px; letter-spacing: 0.5em;
+  color: rgba(255,255,255,0.85);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 2px;
+  padding: 15px 40px; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  min-height: 50px; display: inline-flex; align-items: center;
+  text-transform: uppercase;
+}
+.tut-btn:hover {
+  border-color: rgba(255,255,255,0.72);
+  color: #fff; background: rgba(255,255,255,0.04);
+}
+
+.tut-eyebrow {
+  font-size: 8px; letter-spacing: 0.5em;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 16px; text-transform: uppercase;
+}
+.tut-heading {
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 700; letter-spacing: 0.06em;
+  line-height: 0.95; color: #fff; margin-bottom: 26px;
+}
+.tut-body {
+  font-size: clamp(8px, 1.3vw, 10px);
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.38); line-height: 2.2;
+}
+
+/* — Tutorial 1 — */
+.tut1-layout {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  padding: 80px clamp(24px, 8vw, 120px);
+  gap: clamp(32px, 5vw, 70px);
+}
+.tut1-text { flex: 0 0 auto; max-width: 340px; }
+.tut1-visual {
+  flex: 1; display: flex;
+  align-items: center; justify-content: center;
+  position: relative; min-height: 180px;
+}
+.tut-wheel-group {
+  display: flex; align-items: flex-start;
+  gap: clamp(20px, 4vw, 52px);
+}
+.tut-wheel-col {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+}
+.tut-wheel-svg {
+  width: clamp(110px, 15vw, 158px);
+  height: clamp(110px, 15vw, 158px);
+}
+.tut-wheel-name {
+  font-size: 7px; letter-spacing: 0.38em;
+  color: rgba(255,255,255,0.28); text-transform: uppercase;
+}
+#tut-hand-dot {
+  position: absolute; top: 0; left: 0;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.65);
+  pointer-events: none; opacity: 0; z-index: 2;
+}
+
+/* — Tutorial 2 — */
+.tut2-content {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 80px clamp(24px, 8vw, 120px);
+}
+.tut2-bar-wrap {
+  position: relative; margin-top: 34px;
+  width: fit-content; max-width: 100%;
+}
+.tut2-bar {
+  display: flex; gap: 12px; align-items: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 50px; padding: 10px 20px; flex-wrap: wrap;
+}
+.tut2-group { display: flex; gap: 4px; align-items: center; }
+.tut2-label {
+  font-size: 7px; letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.22); margin-right: 4px; white-space: nowrap;
+}
+.tut2-pill {
+  font-size: 8px; letter-spacing: 0.12em;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.22);
+  min-height: 28px; display: flex; align-items: center;
+  white-space: nowrap; font-family: var(--font);
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
+}
+.tut2-pill.tut2-active {
+  border-color: rgba(255,255,255,0.65);
+  color: #fff; background: rgba(255,255,255,0.07);
+}
+.tut2-sep {
+  width: 1px; height: 18px;
+  background: rgba(255,255,255,0.08); flex-shrink: 0;
+}
+#tut2-cursor {
+  position: absolute;
+  border: 1px solid rgba(255,255,255,0.65);
+  border-radius: 20px; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 8px rgba(255,255,255,0.15);
+}
+
+@media (max-width: 640px) {
+  .tut-header  { left: 24px; right: 24px; top: 22px; }
+  .tut-footer-bar { left: 24px; right: 24px; bottom: 18px; }
+  .tut1-layout {
+    flex-direction: column; justify-content: center;
+    padding: 70px 24px 80px; gap: 28px;
+  }
+  .tut1-text { max-width: 100%; }
+  .tut2-content { padding: 70px 24px 80px; }
+  .tut2-bar { border-radius: 16px; padding: 10px 14px; gap: 8px; }
+  .tut2-sep { display: none; }
+}
+</style>
+</head>
+<body>
+
+<video id="video" autoplay muted playsinline style="opacity:0;transition:opacity 1s"></video>
+<canvas id="ui-canvas"></canvas>
+<div id="chord-flash"></div>
+
+<div id="title">
+  SOMA INSTRUMENT
+  <div id="signature">Selena J.</div>
+</div>
+
+<div id="chord-display">
+  <div id="chord-name">C maj</div>
+  <div id="chord-mood">MAJOR · RADIANT</div>
+</div>
+
+<div class="wheel-hint" id="hint-left">ROOT<br>NOTE</div>
+<div class="wheel-hint" id="hint-right">CHORD<br>MOOD</div>
+
+<div id="bottom-bar">
+  <div class="bar-group">
+    <span class="bar-label">MODE</span>
+    <button class="pill active" data-group="mode" data-val="chord">chord</button>
+    <button class="pill" data-group="mode" data-val="melody">melody</button>
+    <button class="pill" data-group="mode" data-val="drone">drone</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">SCALE</span>
+    <button class="pill active" data-group="scale" data-val="major">major</button>
+    <button class="pill" data-group="scale" data-val="minor">minor</button>
+    <button class="pill" data-group="scale" data-val="penta">penta</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">WAVE</span>
+    <button class="pill active" data-group="wave" data-val="sine">sine</button>
+    <button class="pill" data-group="wave" data-val="triangle">tri</button>
+    <button class="pill" data-group="wave" data-val="sawtooth">saw</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">RANGE</span>
+    <button class="pill" data-group="range" data-val="bass">bass</button>
+    <button class="pill active" data-group="range" data-val="mid">mid</button>
+    <button class="pill" data-group="range" data-val="high">high</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="bar-group">
+    <span class="bar-label">TIMBRE</span>
+    <button class="pill active" data-group="timbre" data-val="piano">piano</button>
+    <button class="pill" data-group="timbre" data-val="soul">soul</button>
+    <button class="pill" data-group="timbre" data-val="guitar">guitar</button>
+  </div>
+  <div class="bar-sep"></div>
+  <button class="pill pause-btn" id="pause-btn">⏸ pause</button>
+</div>
+
+<div id="cam-status">GESTURE CAM LOADING…</div>
+
+<div id="loading">
+  <div class="load-orb">⊕</div>
+  <div class="load-title">SOMA INSTRUMENT</div>
+  <div class="load-step" id="load-step">Initialising…</div>
+  <div class="load-prog"><div class="load-fill" id="load-fill"></div></div>
+</div>
+
+<div id="start-prompt" style="display:none">
+  <div class="sp-orb">⊕</div>
+  <div class="sp-text">TOUCH TO AWAKEN</div>
+  <div class="sp-sub">click anywhere to start the music</div>
+</div>
+
+<div id="cursor-follower"></div>
+
+<!-- ─── LANDING PAGE ─── -->
+<div id="landing">
+  <div class="land-header">
+    <span class="land-header-label">Gesture Instrument</span>
+    <span class="land-header-label">Selena J.</span>
+  </div>
+  <div class="land-center">
+    <div class="land-title">SOMA<br>INSTRUMENT</div>
+    <div class="land-sub">A sound interface controlled by movement</div>
+    <div class="land-desc">Use your hands to shape notes, chords,<br>and texture in real time.</div>
+    <button class="land-cta" id="land-launch">Start session</button>
+  </div>
+  <div class="land-footer">
+    <span>2 hands · 7 notes · 7 chords</span>
+    <span>No touch. No keyboard.</span>
+  </div>
+</div>
+
+<!-- ─── TUTORIAL 1: GESTURE CONTROL ─── -->
+<div id="tutorial-1">
+  <div class="tut-header">
+    <span class="tut-header-label">Gesture Control</span>
+    <span class="tut-header-label">01 / 02</span>
+  </div>
+  <div class="tut1-layout">
+    <div class="tut1-text">
+      <div class="tut-eyebrow">How it works</div>
+      <div class="tut-heading">CONTROL WITH<br>MOVEMENT</div>
+      <div class="tut-body">
+        Your hands become the interface.<br><br>
+        Left hand selects root notes.<br>
+        Right hand shapes chords and harmony.
+      </div>
+    </div>
+    <div class="tut1-visual" id="tut1-visual">
+      <div class="tut-wheel-group">
+        <div class="tut-wheel-col">
+          <svg id="tut-lwheel" viewBox="0 0 160 160" class="tut-wheel-svg"></svg>
+          <span class="tut-wheel-name">Root Notes</span>
+        </div>
+        <div class="tut-wheel-col">
+          <svg id="tut-rwheel" viewBox="0 0 160 160" class="tut-wheel-svg"></svg>
+          <span class="tut-wheel-name">Chords</span>
+        </div>
+      </div>
+      <div id="tut-hand-dot"></div>
+    </div>
+  </div>
+  <div class="tut-footer-bar">
+    <button class="tut-btn" id="tut-1-next">Next</button>
+    <div style="display:flex;align-items:center;gap:20px">
+      <button class="tut-skip" id="tut-1-skip">Skip</button>
+      <div class="tut-dots">
+        <div class="tut-dot active"></div>
+        <div class="tut-dot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TUTORIAL 2: SOUND CONTROLS ─── -->
+<div id="tutorial-2">
+  <div class="tut-header">
+    <span class="tut-header-label">Sound Controls</span>
+    <span class="tut-header-label">02 / 02</span>
+  </div>
+  <div class="tut2-content">
+    <div class="tut-eyebrow">Shape your sound</div>
+    <div class="tut-heading">SHAPE YOUR<br>SOUND</div>
+    <div class="tut-body">
+      Adjust the controls to create different musical textures.<br><br>
+      Mode changes interaction. Scale changes emotion.<br>
+      Range changes pitch. Timbre changes instrument.
+    </div>
+    <div class="tut2-bar-wrap" id="tut2-bar-wrap">
+      <div class="tut2-bar">
+        <div class="tut2-group">
+          <span class="tut2-label">Mode</span>
+          <div class="tut2-pill" data-tut="mode-chord">chord</div>
+          <div class="tut2-pill" data-tut="mode-melody">melody</div>
+          <div class="tut2-pill" data-tut="mode-drone">drone</div>
+        </div>
+        <div class="tut2-sep"></div>
+        <div class="tut2-group">
+          <span class="tut2-label">Scale</span>
+          <div class="tut2-pill" data-tut="scale-major">major</div>
+          <div class="tut2-pill" data-tut="scale-minor">minor</div>
+          <div class="tut2-pill" data-tut="scale-penta">penta</div>
+        </div>
+        <div class="tut2-sep"></div>
+        <div class="tut2-group">
+          <span class="tut2-label">Range</span>
+          <div class="tut2-pill" data-tut="range-bass">bass</div>
+          <div class="tut2-pill" data-tut="range-mid">mid</div>
+          <div class="tut2-pill" data-tut="range-high">high</div>
+        </div>
+        <div class="tut2-sep"></div>
+        <div class="tut2-group">
+          <span class="tut2-label">Timbre</span>
+          <div class="tut2-pill" data-tut="timbre-piano">piano</div>
+          <div class="tut2-pill" data-tut="timbre-soul">soul</div>
+          <div class="tut2-pill" data-tut="timbre-guitar">guitar</div>
+        </div>
+      </div>
+      <div id="tut2-cursor"></div>
+    </div>
+  </div>
+  <div class="tut-footer-bar">
+    <button class="tut-btn" id="tut-2-begin">Begin Session</button>
+    <div style="display:flex;align-items:center;gap:20px">
+      <button class="tut-skip" id="tut-2-skip">Skip</button>
+      <div class="tut-dots">
+        <div class="tut-dot"></div>
+        <div class="tut-dot active"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+const NOTES       = ['C','D','E','F','G','A','B'];
+const CHORD_TYPES = ['maj','m','m7','sus4','dim','aug','7'];
+const NOTE_MIDI   = { C:60, D:62, E:64, F:65, G:67, A:69, B:71 };
+const CHORD_IVLS  = {
+  maj:[0,4,7], m:[0,3,7], m7:[0,3,7,10],
+  sus4:[0,5,7], dim:[0,3,6], aug:[0,4,8],
+  '7':[0,4,7,10]
+};
+const CHORD_MOOD = {
+  maj:'RADIANT · UPLIFTING', m:'DEEP · MYSTERIOUS',
+  m7:'DREAMY · FLOATING',    sus4:'SUSPENDED · OPEN',
+  dim:'DARK · DRAMATIC',     aug:'ETHEREAL · STRANGE',
+  '7':'TENSION · BLUES'
+};
+const CHORD_COLORS = {
+  maj:'#fbbf24', m:'#818cf8', m7:'#c084fc',
+  sus4:'#22d3ee', dim:'#f43f5e', aug:'#86efac',
+  '7':'#fb923c'
+};
+const OCTAVE_SHIFT = { bass:-12, mid:0, high:12 };
+
+// ─── Instrument registry ───────────────────────────────────────
+// Each entry declares its synth key, routing type, and audio params.
+// `synthKey` maps to SYNTHS object populated after initAudio().
+// Adding a new instrument = add one entry here + initialize its synth in initAudio().
+const INSTRUMENTS = {
+  piano: {
+    label: 'piano', synthKey: 'pianoSampler', type: 'sampler',
+    duration: 2.2,
+    hasDrone: false, hasShimmer: false,
+    reverbWet: 0.18, delayWet: 0.0,
+  },
+  soul: {
+    label: 'soul', synthKey: 'toxicSynth', type: 'poly',
+    duration: 2.8,
+    hasDrone: false, hasShimmer: false,
+    reverbWet: 0.36, delayWet: 0.0,
+    osc: { type: 'sine' }, env: { attack:0.04, decay:0.2, sustain:0.82, release:1.6 },
+    volume: -5, vibratoDepth: 0, vibratoFreq: 5,
+    shimmerVol: -60, shimmerDur: 0.5,
+  },
+  guitar: {
+    label: 'guitar', synthKey: 'guitarSynth', type: 'strum',
+    duration: 1.2, strumDelay: 0.04,
+    hasDrone: false, hasShimmer: false,
+  },
+};
+
+// Synth instances — all populated in initAudio()
+const SYNTHS = {
+  padSynth: null, shimmerSynth: null, droneSynth: null,
+  pianoSampler: null, guitarSynth: null, guitarSampler: null, toxicSynth: null,
+};
+
+let currentInstrument = 'piano';
+let vibratoNode = null, reverbNode = null, delayNode = null;
+
+const S = {
+  rootIdx: 0, chordIdx: 0,
+  mode: 'chord', scale: 'major', wave: 'sine', range: 'mid',
+  leftHand: null, rightHand: null,
+  audioReady: false, gestureReady: false,
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  LOADING UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function loadScript(primary, fallback, ms=9000) {
+  return new Promise((res, rej) => {
+    let done = false;
+    function tryLoad(src, isFb) {
+      const s = document.createElement('script'); s.src = src;
+      s.onload = () => { if (!done) { done=true; res(); } };
+      s.onerror = () => {
+        if (!done && !isFb && fallback) tryLoad(fallback, true);
+        else if (!done) { done=true; rej(new Error(src)); }
+      };
+      document.head.appendChild(s);
+    }
+    tryLoad(primary, false);
+    if (fallback) setTimeout(() => { if (!done) tryLoad(fallback, true); }, ms);
+  });
+}
+
+const loadFill = document.getElementById('load-fill');
+const loadStep = document.getElementById('load-step');
+function setStep(msg, pct) { loadStep.textContent=msg; loadFill.style.width=pct+'%'; }
+
+// ═══════════════════════════════════════════════════════════════
+//  AUDIO  — tuned for Birds of a Feather
+// ═══════════════════════════════════════════════════════════════
+let lastRoot=-1, lastChord=-1, chordTimer=null;
+let isPaused = false;
+
+async function initAudio() {
+  await Tone.start();
+
+  const limiter = new Tone.Limiter(-3).toDestination();
+  const compressor = new Tone.Compressor({
+    threshold:-20, ratio:5, attack:0.004, release:0.22, knee:6
+  });
+  compressor.connect(limiter);
+
+  // Long dreamy reverb — key to the ethereal atmosphere
+  const reverb = new Tone.Reverb({ decay:10, wet:0.65 });
+  reverb.connect(compressor);
+  await reverb.generate();
+  reverbNode = reverb;
+
+  // Soft delay shimmer
+  const delay = new Tone.FeedbackDelay({ delayTime:0.38, feedback:0.22, wet:0.18 });
+  delay.connect(reverb);
+  delayNode = delay;
+
+  // Chorus for gentle stereo width
+  const chorus = new Tone.Chorus(2.2, 4.0, 0.40).start();
+  chorus.connect(delay);
+
+  // Vibrato — makes the pad breathe organically
+  const vibrato = new Tone.Vibrato({ frequency:3.5, depth:0.18, wet:0.5 });
+  vibrato.connect(chorus);
+  vibratoNode = vibrato;
+
+  // Main pad — soft triangle wave, warm and airy
+  SYNTHS.padSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope:   { attack:0.9, decay:0.6, sustain:0.60, release:3.5 },
+    volume: -5,
+  });
+  SYNTHS.padSynth.connect(vibrato);
+
+  // Shimmer layer — high octave sine for sparkle
+  SYNTHS.shimmerSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sine' },
+    envelope:   { attack:1.2, decay:0.5, sustain:0.3, release:4 },
+    volume: -18,
+  });
+  SYNTHS.shimmerSynth.connect(reverb);
+
+  // Deep drone for foundation
+  SYNTHS.droneSynth = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope:   { attack:3, decay:0, sustain:1, release:4 },
+    volume: -26,
+  });
+  SYNTHS.droneSynth.connect(reverb);
+
+  // Soul: fat detuned sines + chorus + warm filter
+  const soulChorus = new Tone.Chorus({ frequency: 2.2, delayTime: 3.8, depth: 0.45, wet: 0.55 }).start();
+  const soulReverb = new Tone.Reverb({ decay: 2.8, wet: 0.36 });
+  const soulFilter = new Tone.Filter({ type: 'lowpass', frequency: 2400, Q: 0.7 });
+  soulReverb.connect(compressor);
+  await soulReverb.generate();
+  SYNTHS.toxicSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'fatsine', count: 3, spread: 22 },
+    envelope: { attack: 0.04, decay: 0.22, sustain: 0.82, release: 0.35 },
+    volume: -5,
+  });
+  SYNTHS.toxicSynth.connect(soulFilter);
+  soulFilter.connect(soulChorus);
+  soulChorus.connect(soulReverb);
+
+  // Real piano sampler (Salamander Grand Piano recordings)
+  const dryReverb = new Tone.Reverb({ decay:1.8, wet:0.18 });
+  dryReverb.connect(compressor);
+  await dryReverb.generate();
+  SYNTHS.pianoSampler = new Tone.Sampler({
+    urls: {
+      A1:'A1.mp3', C2:'C2.mp3', A2:'A2.mp3', C3:'C3.mp3',
+      A3:'A3.mp3', C4:'C4.mp3', A4:'A4.mp3', C5:'C5.mp3',
+      A5:'A5.mp3', C6:'C6.mp3', A6:'A6.mp3', C7:'C7.mp3',
+    },
+    baseUrl: 'https://tonejs.github.io/audio/salamander/',
+    onload: () => {
+      const cs = document.getElementById('cam-status');
+      if (cs && cs.textContent === 'PIANO SAMPLES LOADING…')
+        cs.textContent = 'GESTURE CAM ACTIVE ✦';
+    },
+    volume: -4,
+  });
+  SYNTHS.pianoSampler.connect(dryReverb);
+
+  // ── Guitar audio chain ──────────────────────────────────────────
+  // Lowpass softens harshness; small reverb adds breath without wash.
+  const guitarFilter = new Tone.Filter({ type: 'lowpass', frequency: 2400, Q: 0.5 });
+  const guitarVerb   = new Tone.Reverb({ decay: 0.9, wet: 0.12 });
+  guitarVerb.connect(compressor);
+  await guitarVerb.generate();
+  guitarFilter.connect(guitarVerb);
+
+  // Synthetic fallback — available immediately, used until sampler loads.
+  // triangle oscillator + pluck envelope = warm nylon-string-like tone.
+  const _guitarFallback = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope:   { attack: 0.005, decay: 0.18, sustain: 0.12, release: 0.8 },
+    volume: -5,
+  });
+  _guitarFallback.connect(guitarFilter);
+  SYNTHS.guitarSynth = _guitarFallback;
+
+  // Real acoustic nylon guitar samples (gleitz/midi-js-soundfonts, MusyngKite quality).
+  // When loaded, SYNTHS.guitarSynth upgrades from fallback to sampler automatically.
+  SYNTHS.guitarSampler = new Tone.Sampler({
+    urls: {
+      A2:'A2.mp3', C3:'C3.mp3', E3:'E3.mp3',
+      G3:'G3.mp3', A3:'A3.mp3', C4:'C4.mp3',
+      E4:'E4.mp3', G4:'G4.mp3', A4:'A4.mp3', C5:'C5.mp3',
+    },
+    baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_nylon-mp3/',
+    volume: -3,
+    onload: () => {
+      SYNTHS.guitarSampler.connect(guitarFilter);
+      SYNTHS.guitarSynth = SYNTHS.guitarSampler;
+    },
+  });
+
+  S.audioReady = true;
+}
+
+// ── Console test: call testGuitar() from DevTools after TOUCH TO AWAKEN ──
+window.testGuitar = function() {
+  console.group('testGuitar()');
+  if (!S.audioReady)       { console.error('FAIL: click TOUCH TO AWAKEN first'); console.groupEnd(); return; }
+  if (!SYNTHS.guitarSynth) { console.error('FAIL: guitarSynth is null');          console.groupEnd(); return; }
+  const isSampler = SYNTHS.guitarSynth === SYNTHS.guitarSampler;
+  console.log('engine:', isSampler ? 'SAMPLER — real acoustic nylon guitar' : 'FALLBACK SYNTH — sampler still loading or unavailable');
+  const notes = ['C4', 'E4', 'G4'];
+  const now   = Tone.now();
+  notes.forEach((note, i) => {
+    const vel = Math.max(0.45, 0.85 - i * 0.08);
+    SYNTHS.guitarSynth.triggerAttackRelease(note, 1.2, now + i * 0.04, vel);
+  });
+  console.log('PASS — C major strum sent:', notes);
+  console.groupEnd();
+};
+
+function getChordNotes(rootIdx, chordIdx) {
+  const base = NOTE_MIDI[NOTES[rootIdx]] + OCTAVE_SHIFT[S.range];
+  return CHORD_IVLS[CHORD_TYPES[chordIdx]].map(i => Tone.Frequency(base+i,'midi').toNote());
+}
+
+// Central playback dispatcher — reads INSTRUMENTS registry, routes to correct synth.
+// To add a new instrument: add entry to INSTRUMENTS, init synth in initAudio(), done.
+function playChord(notes) {
+  const inst  = INSTRUMENTS[currentInstrument];
+  const synth = SYNTHS[inst.synthKey];
+  if (!synth) return;
+
+  if (inst.type === 'sampler' || inst.type === 'poly') {
+    synth.triggerAttackRelease(notes, inst.duration);
+  } else if (inst.type === 'strum') {
+    // Strum: notes scheduled on audio clock, velocity tapers like a real strum
+    const now = Tone.now();
+    notes.forEach((note, i) => {
+      const vel = Math.max(0.45, 0.85 - i * 0.08);
+      synth.triggerAttackRelease(note, inst.duration, now + i * inst.strumDelay, vel);
+    });
+  }
+}
+
+function scheduleChord(force=false) {
+  if (!S.audioReady || isPaused) return;
+  if (!force && S.rootIdx===lastRoot && S.chordIdx===lastChord) return;
+  if (chordTimer) clearTimeout(chordTimer);
+  chordTimer = setTimeout(() => {
+    const notes = getChordNotes(S.rootIdx, S.chordIdx);
+    const inst  = INSTRUMENTS[currentInstrument];
+
+    // Release previous voices before replaying (poly and strum both use PolySynth)
+    if (inst.type === 'poly' || inst.type === 'strum') SYNTHS[inst.synthKey]?.releaseAll('+0.0');
+
+    // Sampler and strum play immediately; poly waits for voice release gap
+    const preDelay = (inst.type === 'sampler' || inst.type === 'strum') ? 0 : 160;
+    setTimeout(() => {
+      playChord(notes);
+
+      if (inst.hasShimmer && SYNTHS.shimmerSynth) {
+        const highNotes = notes.map(n => Tone.Frequency(n).transpose(12).toNote());
+        SYNTHS.shimmerSynth.triggerAttackRelease(highNotes, inst.shimmerDur || 0.5);
+      }
+      if (inst.hasDrone && S.mode !== 'melody' && SYNTHS.droneSynth) {
+        const droneNote = Tone.Frequency(NOTE_MIDI[NOTES[S.rootIdx]]+OCTAVE_SHIFT[S.range]-12,'midi').toNote();
+        SYNTHS.droneSynth.triggerRelease();
+        setTimeout(() => SYNTHS.droneSynth.triggerAttackRelease(droneNote, 3.5), 400);
+      }
+    }, preDelay);
+
+    lastRoot  = S.rootIdx;
+    lastChord = S.chordIdx;
+    updateChordUI();
+  }, 120);
+}
+
+function updateChordUI() {
+  const chordType = CHORD_TYPES[S.chordIdx];
+  const color     = CHORD_COLORS[chordType];
+  document.getElementById('chord-name').textContent = NOTES[S.rootIdx] + ' ' + chordType;
+  document.getElementById('chord-mood').textContent = CHORD_MOOD[chordType];
+  document.getElementById('chord-name').style.textShadow = `0 0 20px ${color}, 0 0 40px ${color}`;
+}
+
+function stopAll() {
+  if (!S.audioReady) return;
+  if (chordTimer) { clearTimeout(chordTimer); chordTimer=null; }
+  Object.values(SYNTHS).forEach(s => {
+    if (!s) return;
+    if (typeof s.releaseAll === 'function') s.releaseAll('+0.3');
+    else if (typeof s.triggerRelease === 'function') s.triggerRelease();
+  });
+  lastRoot=-1; lastChord=-1;
+}
+
+function togglePause() {
+  const btn = document.getElementById('pause-btn');
+  isPaused = !isPaused;
+  if (isPaused) {
+    stopAll();
+    btn.textContent = '▶ resume';
+    btn.classList.add('paused');
+  } else {
+    btn.textContent = '⏸ pause';
+    btn.classList.remove('paused');
+  }
+}
+
+function applyInstrument(name) {
+  if (!INSTRUMENTS[name] || !S.audioReady) return;
+  currentInstrument = name;
+  stopAll();
+  lastRoot=-1; lastChord=-1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WHEEL DRAWING  — responsive, white glassmorphism
+// ═══════════════════════════════════════════════════════════════
+const uiCanvas = document.getElementById('ui-canvas');
+const uctx     = uiCanvas.getContext('2d');
+let LW_CENTER, RW_CENTER;
+let OUTER_R = 175, INNER_R = 58;
+const GAP = 8;
+
+function updateWheelCenters() {
+  uiCanvas.width  = innerWidth;
+  uiCanvas.height = innerHeight;
+  const cy = innerHeight * 0.5;
+
+  // Scale wheels down on narrow screens so they never overlap
+  if (innerWidth < 600) {
+    OUTER_R = Math.max(78, Math.floor(innerWidth * 0.22));
+    INNER_R = Math.max(24, Math.floor(OUTER_R * 0.33));
+  } else {
+    OUTER_R = 175;
+    INNER_R = 58;
+  }
+
+  LW_CENTER = { x: Math.min(220, innerWidth*0.22), y: cy };
+  RW_CENTER = { x: Math.max(innerWidth-220, innerWidth*0.78), y: cy };
+}
+updateWheelCenters();
+window.addEventListener('resize', updateWheelCenters);
+
+function drawWheel(cx, cy, labels, activeIdx, handPos, handInCenter=false) {
+  const n    = labels.length;
+  const step = (Math.PI*2) / n;
+  const start = -Math.PI / 2;
+
+  // Dark backdrop for contrast against camera feed
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, OUTER_R+14, 0, Math.PI*2);
+  uctx.fillStyle = 'rgba(0,0,0,0.38)';
+  uctx.fill();
+  uctx.restore();
+
+  // Outer halo ring
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, OUTER_R+10, 0, Math.PI*2);
+  uctx.strokeStyle = 'rgba(255,255,255,0.30)';
+  uctx.lineWidth   = 1.5;
+  uctx.shadowColor = 'rgba(255,255,255,0.8)';
+  uctx.shadowBlur  = 22;
+  uctx.stroke();
+  uctx.restore();
+
+  // Sections
+  for (let i=0; i<n; i++) {
+    const a0    = start + i*step + 0.02;
+    const a1    = start + (i+1)*step - 0.02;
+    const isAct = i === activeIdx;
+
+    uctx.save();
+    uctx.beginPath();
+    uctx.arc(cx, cy, OUTER_R, a0, a1);
+    uctx.arc(cx, cy, INNER_R, a1, a0, true);
+    uctx.closePath();
+
+    if (isAct) {
+      const grad = uctx.createRadialGradient(cx,cy,INNER_R, cx,cy,OUTER_R);
+      grad.addColorStop(0, 'rgba(255,255,255,0.38)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.55)');
+      uctx.fillStyle   = grad;
+      uctx.shadowColor = 'rgba(255,255,255,1)';
+      uctx.shadowBlur  = 38;
+    } else {
+      uctx.fillStyle = 'rgba(255,255,255,0.13)';
+    }
+    uctx.fill();
+
+    uctx.strokeStyle = isAct ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.30)';
+    uctx.lineWidth   = isAct ? 2.0 : 0.9;
+    if (isAct) { uctx.shadowColor='rgba(255,255,255,0.9)'; uctx.shadowBlur=20; }
+    else uctx.shadowBlur = 0;
+    uctx.stroke();
+    uctx.restore();
+
+    // Label — scales font with wheel size on mobile
+    const lr = (OUTER_R+INNER_R)/2;
+    const la = start + (i+0.5)*step;
+    const lx = cx + Math.cos(la)*lr;
+    const ly = cy + Math.sin(la)*lr;
+    const fs = OUTER_R < 120 ? (isAct ? 10 : 8) : (isAct ? 13 : 11);
+    uctx.save();
+    uctx.font         = `${isAct ? 'bold ' : ''}${fs}px Orbitron, monospace`;
+    uctx.fillStyle    = isAct ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.65)';
+    uctx.textAlign    = 'center';
+    uctx.textBaseline = 'middle';
+    if (isAct) { uctx.shadowColor='rgba(255,255,255,1)'; uctx.shadowBlur=14; }
+    uctx.fillText(labels[i], lx, ly);
+    uctx.restore();
+  }
+
+  // Inner stop circle
+  const stopR = INNER_R - GAP;
+  uctx.save();
+  uctx.beginPath();
+  uctx.arc(cx, cy, stopR, 0, Math.PI*2);
+  uctx.fillStyle   = handInCenter ? 'rgba(244,63,94,0.35)' : 'rgba(255,255,255,0.10)';
+  uctx.fill();
+  uctx.strokeStyle = handInCenter ? 'rgba(244,63,94,0.95)' : 'rgba(255,255,255,0.45)';
+  uctx.lineWidth   = handInCenter ? 2 : 1;
+  uctx.shadowColor = handInCenter ? 'rgba(244,63,94,1)' : 'rgba(255,255,255,0.7)';
+  uctx.shadowBlur  = handInCenter ? 28 : 12;
+  uctx.stroke();
+  uctx.restore();
+
+  const cfs = OUTER_R < 120 ? 7 : (handInCenter ? 11 : 9);
+  uctx.save();
+  uctx.font         = `${handInCenter ? 'bold ' : ''}${cfs}px Orbitron, monospace`;
+  uctx.fillStyle    = handInCenter ? 'rgba(244,63,94,1)' : 'rgba(255,255,255,0.35)';
+  uctx.textAlign    = 'center';
+  uctx.textBaseline = 'middle';
+  if (handInCenter) { uctx.shadowColor='rgba(244,63,94,1)'; uctx.shadowBlur=16; }
+  uctx.fillText('⏹ STOP', cx, cy);
+  uctx.restore();
+
+  // Active section inner arc highlight
+  if (activeIdx >= 0) {
+    const a0=start+activeIdx*step+0.04, a1=start+(activeIdx+1)*step-0.04;
+    uctx.save();
+    uctx.beginPath();
+    uctx.arc(cx, cy, INNER_R-GAP+2, a0, a1);
+    uctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    uctx.lineWidth   = 2.5;
+    uctx.shadowColor = 'rgba(255,255,255,0.9)';
+    uctx.shadowBlur  = 22;
+    uctx.stroke();
+    uctx.restore();
+  }
+
+  // Hand tracking dot — glows in chord color when on an active section
+  if (handPos) {
+    const dx = handPos.x-cx, dy = handPos.y-cy;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist>INNER_R && dist<OUTER_R+30) {
+      const dotColor = activeIdx >= 0
+        ? (CHORD_COLORS[CHORD_TYPES[S.chordIdx]] || '#fff')
+        : '#fff';
+      uctx.save();
+      uctx.beginPath();
+      uctx.arc(handPos.x, handPos.y, 7, 0, Math.PI*2);
+      uctx.fillStyle   = dotColor;
+      uctx.shadowColor = dotColor;
+      uctx.shadowBlur  = activeIdx >= 0 ? 28 : 20;
+      uctx.fill();
+      uctx.beginPath();
+      uctx.moveTo(cx, cy);
+      uctx.lineTo(handPos.x, handPos.y);
+      uctx.strokeStyle = 'rgba(255,255,255,0.30)';
+      uctx.lineWidth   = 1;
+      uctx.shadowBlur  = 0;
+      uctx.stroke();
+      uctx.restore();
+    }
+  }
+}
+
+function getSection(hx, hy, cx, cy, n) {
+  const dx=hx-cx, dy=hy-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if (dist<INNER_R+10 || dist>OUTER_R+40) return -1;
+  const ang  = Math.atan2(dy, dx);
+  const norm = (ang+Math.PI/2+Math.PI*2) % (Math.PI*2);
+  return Math.floor(norm / ((Math.PI*2)/n)) % n;
+}
+
+function isInCenter(hx, hy, cx, cy) {
+  const dx=hx-cx, dy=hy-cy;
+  return Math.sqrt(dx*dx+dy*dy) < (INNER_R - GAP + 6);
+}
+
+let _wasHandActive = false;
+
+function drawWheels() {
+  uctx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
+
+  const lx = S.leftHand  ? S.leftHand.x  : -999;
+  const ly = S.leftHand  ? S.leftHand.y  : -999;
+  const rx = S.rightHand ? S.rightHand.x : -999;
+  const ry = S.rightHand ? S.rightHand.y : -999;
+
+  const lSect = getSection(lx, ly, LW_CENTER.x, LW_CENTER.y, NOTES.length);
+  const rSect = getSection(rx, ry, RW_CENTER.x, RW_CENTER.y, CHORD_TYPES.length);
+
+  const lInCenter = S.leftHand  && isInCenter(lx, ly, LW_CENTER.x, LW_CENTER.y);
+  const rInCenter = S.rightHand && isInCenter(rx, ry, RW_CENTER.x, RW_CENTER.y);
+
+  if (lInCenter) stopAll();
+  if (rInCenter) stopAll();
+
+  const isHandActive = lSect >= 0 || rSect >= 0;
+  const justEntered  = isHandActive && !_wasHandActive;
+  const justLeft     = !isHandActive && _wasHandActive;
+  _wasHandActive = isHandActive;
+
+  if (justLeft && !lInCenter && !rInCenter) stopAll();
+
+  if (isHandActive) {
+    if (lSect>=0 && lSect!==S.rootIdx)  { S.rootIdx=lSect;  scheduleChord(); }
+    if (rSect>=0 && rSect!==S.chordIdx) { S.chordIdx=rSect; scheduleChord(); }
+    if (justEntered) scheduleChord(true);
+  }
+
+  drawWheel(LW_CENTER.x, LW_CENTER.y, NOTES,       S.rootIdx,  S.leftHand,  lInCenter);
+  drawWheel(RW_CENTER.x, RW_CENTER.y, CHORD_TYPES,  S.chordIdx, S.rightHand, rInCenter);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MEDIAPIPE HANDS
+// ═══════════════════════════════════════════════════════════════
+async function loadGestureCamera() {
+  const cs = document.getElementById('cam-status');
+  cs.textContent = 'LOADING GESTURE ENGINE…';
+  try {
+    await loadScript(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
+      'https://unpkg.com/@mediapipe/hands/hands.js', 12000
+    );
+    await loadScript(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js',
+      'https://unpkg.com/@mediapipe/camera_utils/camera_utils.js', 8000
+    );
+  } catch(e) {
+    cs.textContent = 'GESTURE CAM UNAVAILABLE'; return;
+  }
+
+  cs.textContent = 'STARTING CAMERA…';
+  const video = document.getElementById('video');
+
+  const mp = new Hands({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+  mp.setOptions({ maxNumHands:2, modelComplexity:1, minDetectionConfidence:0.70, minTrackingConfidence:0.55 });
+
+  mp.onResults(results => {
+    S.leftHand = null; S.rightHand = null;
+    if (!results.multiHandLandmarks) return;
+    results.multiHandLandmarks.forEach(lm => {
+      const px = (1 - ((lm[0].x+lm[5].x+lm[17].x)/3)) * innerWidth;
+      const py = ((lm[0].y+lm[5].y+lm[17].y)/3) * innerHeight;
+      if (px < innerWidth*0.5) S.leftHand  = { x:px, y:py };
+      else                     S.rightHand = { x:px, y:py };
+    });
+  });
+
+  try {
+    await new Camera(video, {
+      onFrame: async () => { await mp.send({ image:video }); },
+      width:640, height:480,
+    }).start();
+    cs.textContent = 'GESTURE CAM ACTIVE ✦';
+    S.gestureReady = true;
+    setTimeout(() => { cs.style.opacity='0.3'; }, 3000);
+  } catch(e) {
+    cs.textContent = 'CAMERA ACCESS DENIED';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════════════
+function startLoop() {
+  (function loop() { requestAnimationFrame(loop); drawWheels(); })();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TUTORIAL PAGES
+// ═══════════════════════════════════════════════════════════════
+function buildTutWheel(svgEl, labels) {
+  const n = labels.length;
+  const cx = 80, cy = 80, R = 70, r = 26;
+  const step = (Math.PI * 2) / n;
+  const start = -Math.PI / 2;
+  svgEl.innerHTML = '';
+
+  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ring.setAttribute('cx', cx); ring.setAttribute('cy', cy);
+  ring.setAttribute('r', R + 8); ring.setAttribute('fill', 'none');
+  ring.setAttribute('stroke', 'rgba(255,255,255,0.14)');
+  ring.setAttribute('stroke-width', '1');
+  svgEl.appendChild(ring);
+
+  for (let i = 0; i < n; i++) {
+    const a0 = start + i * step + 0.04;
+    const a1 = start + (i + 1) * step - 0.04;
+    const large = (a1 - a0) > Math.PI ? 1 : 0;
+    const x1 = cx + R * Math.cos(a0), y1 = cy + R * Math.sin(a0);
+    const x2 = cx + R * Math.cos(a1), y2 = cy + R * Math.sin(a1);
+    const x3 = cx + r * Math.cos(a1), y3 = cy + r * Math.sin(a1);
+    const x4 = cx + r * Math.cos(a0), y4 = cy + r * Math.sin(a0);
+    const d  = `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${large} 0 ${x4} ${y4} Z`;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'rgba(255,255,255,0.07)');
+    path.setAttribute('stroke', 'rgba(255,255,255,0.20)');
+    path.setAttribute('stroke-width', '0.8');
+    path.classList.add('tut-seg', `tut-seg-${i}`);
+    svgEl.appendChild(path);
+
+    const lr = (R + r) / 2;
+    const la = start + (i + 0.5) * step;
+    const lx = cx + lr * Math.cos(la);
+    const ly = cy + lr * Math.sin(la);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', lx); txt.setAttribute('y', ly);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dominant-baseline', 'middle');
+    txt.setAttribute('fill', 'rgba(255,255,255,0.38)');
+    txt.setAttribute('font-size', '8.5');
+    txt.setAttribute('font-family', 'Orbitron, monospace');
+    txt.classList.add(`tut-seg-label-${i}`);
+    txt.textContent = labels[i];
+    svgEl.appendChild(txt);
+  }
+
+  const inner = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  inner.setAttribute('cx', cx); inner.setAttribute('cy', cy);
+  inner.setAttribute('r', r - 4); inner.setAttribute('fill', 'rgba(255,255,255,0.04)');
+  inner.setAttribute('stroke', 'rgba(255,255,255,0.18)');
+  inner.setAttribute('stroke-width', '0.8');
+  svgEl.appendChild(inner);
+}
+
+function setTutSeg(svgEl, idx, on) {
+  const path = svgEl.querySelector(`.tut-seg-${idx}`);
+  const text = svgEl.querySelector(`.tut-seg-label-${idx}`);
+  if (!path || !text) return;
+  gsap.to(path, {
+    attr: {
+      fill:           on ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.07)',
+      stroke:         on ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.20)',
+      'stroke-width': on ? '1.5' : '0.8',
+    },
+    duration: 0.35, ease: 'power2.out',
+  });
+  gsap.to(text, {
+    attr: { fill: on ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.38)' },
+    duration: 0.35, ease: 'power2.out',
+  });
+}
+
+let _tut1TL = null;
+let _tut2TL = null;
+
+function startTut1Anim() {
+  const lwheel  = document.getElementById('tut-lwheel');
+  const rwheel  = document.getElementById('tut-rwheel');
+  const handDot = document.getElementById('tut-hand-dot');
+  const visual  = document.getElementById('tut1-visual');
+  if (!lwheel || !rwheel || !handDot || !visual) return;
+
+  const visualRect = visual.getBoundingClientRect();
+  const lRect = lwheel.getBoundingClientRect();
+  const rRect = rwheel.getBoundingClientRect();
+  const scaleL = lRect.width / 160;
+  const scaleR = rRect.width / 160;
+
+  const L_SEG = 2, R_SEG = 0; // highlight E on left, maj on right
+
+  function segPos(rect, scale, idx, total) {
+    const angle = -Math.PI / 2 + (idx + 0.5) * (Math.PI * 2 / total);
+    const midR  = (70 + 26) / 2;
+    return {
+      x: rect.left - visualRect.left + rect.width  / 2 + Math.cos(angle) * midR * scale,
+      y: rect.top  - visualRect.top  + rect.height / 2 + Math.sin(angle) * midR * scale,
+    };
+  }
+
+  const lPos = segPos(lRect, scaleL, L_SEG, NOTES.length);
+  const rPos = segPos(rRect, scaleR, R_SEG, CHORD_TYPES.length);
+
+  gsap.set(handDot, { x: lPos.x, y: lPos.y, xPercent: -50, yPercent: -50, opacity: 0 });
+
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.3 });
+  tl.to(handDot, { opacity: 1, duration: 0.4, ease: 'power2.out' })
+    .call(() => setTutSeg(lwheel, L_SEG, true))
+    .to({}, { duration: 1.5 })
+    .call(() => setTutSeg(lwheel, L_SEG, false))
+    .to(handDot, { x: rPos.x, y: rPos.y, duration: 0.85, ease: 'power2.inOut' }, '+=0.15')
+    .call(() => setTutSeg(rwheel, R_SEG, true))
+    .to({}, { duration: 1.5 })
+    .call(() => setTutSeg(rwheel, R_SEG, false))
+    .to(handDot, { x: lPos.x, y: lPos.y, duration: 0.85, ease: 'power2.inOut' }, '+=0.15');
+
+  _tut1TL = tl;
+}
+
+function startTut2Anim() {
+  const wrap   = document.getElementById('tut2-bar-wrap');
+  const cursor = document.getElementById('tut2-cursor');
+  if (!wrap || !cursor) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  const pillKeys = ['mode-chord', 'scale-minor', 'range-high', 'timbre-soul'];
+  const positions = pillKeys.map(k => {
+    const el = document.querySelector(`[data-tut="${k}"]`);
+    const r  = el.getBoundingClientRect();
+    return { el,
+      x: r.left - wrapRect.left + r.width  / 2,
+      y: r.top  - wrapRect.top  + r.height / 2,
+      w: r.width, h: r.height,
+    };
+  });
+
+  const p0 = positions[0];
+  gsap.set(cursor, {
+    x: p0.x, y: p0.y, xPercent: -50, yPercent: -50,
+    width: p0.w + 10, height: p0.h + 10, opacity: 0,
+  });
+
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.3 });
+  tl.to(cursor, { opacity: 1, duration: 0.4 })
+    .call(() => p0.el.classList.add('tut2-active'));
+
+  for (let i = 1; i < positions.length; i++) {
+    const pos  = positions[i];
+    const prev = positions[i - 1];
+    tl.to({}, { duration: 1.1 })
+      .call(() => prev.el.classList.remove('tut2-active'))
+      .to(cursor, { x: pos.x, y: pos.y, width: pos.w + 10, height: pos.h + 10,
+                    duration: 0.7, ease: 'power2.inOut' })
+      .call(() => pos.el.classList.add('tut2-active'));
+  }
+
+  tl.to({}, { duration: 1.1 })
+    .call(() => positions[positions.length - 1].el.classList.remove('tut2-active'))
+    .to(cursor, { opacity: 0, duration: 0.35 });
+
+  _tut2TL = tl;
+}
+
+function killTutAnims() {
+  if (_tut1TL) { _tut1TL.kill(); _tut1TL = null; }
+  if (_tut2TL) { _tut2TL.kill(); _tut2TL = null; }
+  document.querySelectorAll('.tut2-active').forEach(el => el.classList.remove('tut2-active'));
+  const cursor = document.getElementById('tut2-cursor');
+  if (cursor) gsap.set(cursor, { opacity: 0 });
+  const handDot = document.getElementById('tut-hand-dot');
+  if (handDot) gsap.set(handDot, { opacity: 0 });
+}
+
+function showTutPage(id, onComplete) {
+  const el = document.getElementById(`tutorial-${id}`);
+  el.style.display = 'block';
+  gsap.fromTo(el,
+    { opacity: 0, y: 18 },
+    { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', onComplete }
+  );
+}
+
+function hideTutPage(id, onComplete) {
+  const el = document.getElementById(`tutorial-${id}`);
+  gsap.to(el, {
+    opacity: 0, y: -14, duration: 0.42, ease: 'power2.in',
+    onComplete: () => { el.style.display = 'none'; if (onComplete) onComplete(); },
+  });
+}
+
+function initTutorials(onDone) {
+  buildTutWheel(document.getElementById('tut-lwheel'), NOTES);
+  buildTutWheel(document.getElementById('tut-rwheel'), CHORD_TYPES);
+
+  function skipAll() {
+    killTutAnims();
+    const t1 = document.getElementById('tutorial-1');
+    const t2 = document.getElementById('tutorial-2');
+    const visible = [t1, t2].filter(el => el.style.display !== 'none');
+    if (visible.length === 0) { onDone(); return; }
+    gsap.to(visible, {
+      opacity: 0, duration: 0.38, ease: 'power2.in',
+      onComplete: () => { t1.style.display = 'none'; t2.style.display = 'none'; onDone(); },
+    });
+  }
+
+  document.getElementById('tut-1-skip').addEventListener('click', skipAll, { once: true });
+  document.getElementById('tut-2-skip').addEventListener('click', skipAll, { once: true });
+
+  document.getElementById('tut-1-next').addEventListener('click', () => {
+    killTutAnims();
+    hideTutPage(1, () => {
+      showTutPage(2, () => requestAnimationFrame(startTut2Anim));
+    });
+  }, { once: true });
+
+  document.getElementById('tut-2-begin').addEventListener('click', () => {
+    killTutAnims();
+    hideTutPage(2, onDone);
+  }, { once: true });
+
+  showTutPage(1, () => requestAnimationFrame(startTut1Anim));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UI EVENTS
+// ═══════════════════════════════════════════════════════════════
+function initUI() {
+  document.querySelectorAll('.pill:not(#pause-btn)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group;
+      const val   = btn.dataset.val;
+      document.querySelectorAll(`.pill[data-group="${group}"]`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      if (group === 'timbre') {
+        if (val === 'piano' && SYNTHS.pianoSampler && !SYNTHS.pianoSampler.loaded) {
+          document.getElementById('cam-status').textContent = 'PIANO SAMPLES LOADING…';
+        }
+        applyInstrument(val);
+        return;
+      }
+      S[group] = val;
+      if (group==='wave' && SYNTHS.padSynth) {
+        const waveMap = { sine:'triangle', triangle:'triangle', sawtooth:'sawtooth' };
+        SYNTHS.padSynth.set({ oscillator:{ type: waveMap[val] || 'triangle' } });
+      }
+      if (group==='range') scheduleChord(true);
+    });
+  });
+  document.getElementById('pause-btn').addEventListener('click', togglePause);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LANDING  — GSAP entrance + cursor follower
+// ═══════════════════════════════════════════════════════════════
+function initLanding() {
+  gsap.set(['.land-title', '.land-sub', '.land-desc', '#land-launch'], { y: 24 });
+
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  tl.to('.land-header', { opacity: 1, duration: 0.5 }, 0.15)
+    .to('.land-title',  { opacity: 1, y: 0, duration: 1.1 }, 0.3)
+    .to('.land-sub',    { opacity: 1, y: 0, duration: 0.85 }, 0.72)
+    .to('.land-desc',   { opacity: 1, y: 0, duration: 0.75 }, 1.05)
+    .to('#land-launch', { opacity: 1, y: 0, duration: 0.65 }, 1.38)
+    .to('.land-footer', { opacity: 1, duration: 0.55 }, 1.65);
+
+  // Button hover micro-animation
+  const cta = document.getElementById('land-launch');
+  cta.addEventListener('mouseenter', () => gsap.to(cta, { scale: 1.04, duration: 0.18, ease: 'power2.out' }));
+  cta.addEventListener('mouseleave', () => gsap.to(cta, { scale: 1, duration: 0.22, ease: 'power2.out' }));
+
+  // Cursor follower — desktop only
+  const follower = document.getElementById('cursor-follower');
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  const xTo = gsap.quickTo(follower, 'x', { duration: 0.5, ease: 'power3.out' });
+  const yTo = gsap.quickTo(follower, 'y', { duration: 0.5, ease: 'power3.out' });
+  let shown = false;
+
+  function onMouseMove(e) {
+    const cx = e.clientX;
+    const cy = e.clientY;
+    if (!shown) {
+      gsap.set(follower, { x: cx, y: cy });
+      gsap.to(follower, { opacity: 1, duration: 0.45, ease: 'power2.out' });
+      shown = true;
+    }
+    xTo(cx);
+    yTo(cy);
+  }
+
+  window.addEventListener('mousemove', onMouseMove);
+
+  document.getElementById('land-launch').addEventListener('click', () => {
+    window.removeEventListener('mousemove', onMouseMove);
+    gsap.to(follower, { opacity: 0, duration: 0.3, ease: 'power2.in',
+      onComplete: () => { if (follower.parentNode) follower.remove(); }
+    });
+  }, { once: true });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN  — landing → loading → start-prompt → onboarding → play
+// ═══════════════════════════════════════════════════════════════
+async function main() {
+  startLoop();
+  initUI();
+  initLanding();
+
+  const lov = document.getElementById('loading');
+
+  document.getElementById('land-launch').addEventListener('click', () => {
+    // Fade out landing page
+    const landing = document.getElementById('landing');
+    gsap.to(landing, { opacity: 0, duration: 0.55, ease: 'power2.in', onComplete: () => landing.remove() });
+
+    // Tutorials run first; camera and audio start only after tutorials complete
+    initTutorials(async () => {
+      const video = document.getElementById('video');
+      video.style.opacity = '1';
+      loadGestureCamera();
+
+      // Brief loading beat before showing start prompt
+      lov.style.display = 'flex';
+      setStep('Preparing instrument…', 40);
+      await new Promise(r => setTimeout(r, 200));
+      setStep('Ready ✦', 100);
+      await new Promise(r => setTimeout(r, 300));
+      lov.style.opacity = '0';
+      setTimeout(() => { lov.style.display='none'; lov.style.opacity=''; }, 900);
+
+      const sp = document.getElementById('start-prompt');
+      sp.style.display = 'flex';
+
+      sp.addEventListener('click', async () => {
+        sp.style.opacity = '0';
+        setTimeout(() => sp.remove(), 600);
+        document.getElementById('cam-status').textContent = 'LOADING AUDIO ENGINE…';
+
+        await loadScript(
+          'https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js',
+          'https://unpkg.com/tone@14.7.77/build/Tone.js', 12000
+        ).catch(() => {});
+
+        if (typeof Tone !== 'undefined') {
+          await initAudio();
+          document.getElementById('cam-status').textContent =
+            S.gestureReady ? 'GESTURE CAM ACTIVE ✦' : 'GESTURE CAM LOADING…';
+        }
+      }, { once: true });
+    });
+  });
+}
+
+main().catch(err => {
+  const step = document.getElementById('load-step');
+  if (step) { step.textContent = 'Error: '+err.message; step.style.color='#f43f5e'; }
+});
+</script>
+</body>
+</html>
