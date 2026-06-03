@@ -2,7 +2,7 @@
 
 A browser-based musical instrument controlled entirely by hand gestures — no keyboard, no MIDI controller, just your webcam.
 
-**[▶ Try it live](https://SelenaJiangSR.github.io/celestial-instrument/)**
+**[▶ Try it live](https://app.netlify.com/projects/glowing-fudge-994b23/overview)**
 
 ---
 
